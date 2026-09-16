@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Crop Leaf Disease Identifier</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <section id="languageGate" class="language-gate" aria-labelledby="languageTitle">
+      <div class="language-card">
+        <div class="language-mark" aria-hidden="true">🌱</div>
+        <p class="eyebrow" data-i18n="appEyebrow">Agriculture AI Assistant</p>
+        <h1 id="languageTitle" data-i18n="appName">Crop Leaf Disease Identifier</h1>
+        <p class="language-prompt" data-i18n="selectLanguage">Select your preferred language</p>
+        <p class="language-hint" data-i18n="languageHint">Choose a language to begin</p>
+        <div class="language-options" role="radiogroup" aria-label="Language options">
+          <button type="button" class="language-option" data-language="te" role="radio" aria-checked="false"><span>🇮🇳</span><strong>తెలుగు</strong><small>Telugu</small></button>
+          <button type="button" class="language-option" data-language="hi" role="radio" aria-checked="false"><span>🇮🇳</span><strong>हिन्दी</strong><small>Hindi</small></button>
+          <button type="button" class="language-option" data-language="en" role="radio" aria-checked="false"><span>🌐</span><strong>English</strong><small>English</small></button>
+        </div>
+        <button type="button" id="continueButton" class="continue-button" disabled data-i18n="continue">Continue</button>
+      </div>
+    </section>
+
+    <div id="appShell" class="dashboard-shell app-shell hidden">
+      <header class="topbar">
+        <div class="brand-group">
+          <div class="brand-mark">🌾</div>
+          <div>
+            <span class="eyebrow" data-i18n="appEyebrow">Agriculture AI Assistant · Dashboard</span>
+            <h1 data-i18n="appName">Crop Leaf Disease Identifier</h1>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <a class="text-link" href="{{ url_for('diseases') }}" data-i18n="diseaseGuide">Disease guide</a>
+          <label class="language-switcher" aria-label="Language"><span>🌐</span><select id="languageSwitcher"><option value="te">తెలుగు</option><option value="hi">हिन्दी</option><option value="en">English</option></select></label>
+          <div class="status-pill" data-i18n="systemOnline">System online</div>
+        </div>
+      </header>
+
+      <main class="dashboard-grid">
+        <section class="panel upload-panel">
+          <div class="panel-header">
+            <h2 data-i18n="leafAnalysis">Leaf analysis</h2>
+            <span data-i18n="quickDiagnosis">Quick diagnosis</span>
+          </div>
+
+          <form action="/predict" method="post" enctype="multipart/form-data" class="upload-form">
+            <label for="file" data-i18n="analyzeLeaf">Analyze a Leaf</label>
+            <span class="helper-text" data-i18n="uploadLeaf">Upload a crop leaf image</span>
+            <input id="file" type="file" name="file" accept="image/*" required />
+            <div class="camera-actions">
+              <button type="button" id="cameraButton" class="secondary-button" data-i18n="useCamera">Use camera</button>
+              <button type="button" id="stopCameraButton" class="secondary-button hidden" data-i18n="stopCamera">Stop camera</button>
+            </div>
+            <video id="cameraPreview" class="camera-preview hidden" autoplay playsinline></video>
+            <canvas id="cameraCanvas" class="hidden"></canvas>
+            <button type="button" id="captureButton" class="secondary-button hidden" data-i18n="captureLeaf">Capture leaf</button>
+            <div id="imagePreview" class="image-preview hidden">
+              <img id="previewImage" alt="Selected leaf preview" />
+              <span data-i18n="readyToScan">Ready to scan</span>
+            </div>
+            <p id="uploadStatus" class="upload-status" role="status"></p>
+            <button type="submit" id="identifyButton" data-i18n="identifyDisease">Identify disease</button>
+          </form>
+        </section>
+
+        <section class="panel result-panel">
+          <div class="panel-header">
+            <h2 data-i18n="predictionResult">Prediction result</h2>
+            <span data-i18n="latestDiagnosis">Latest diagnosis</span>
+          </div>
+
+          <div class="result-box">
+            <img id="resultImage" class="result-image hidden" alt="Uploaded leaf" />
+            <div class="result-row">
+              <span class="result-label" data-i18n="predictedDisease">Predicted disease</span>
+              <strong id="label" data-i18n="scanToIdentify">Scan a leaf to identify disease</strong>
+            </div>
+            <div class="result-row">
+              <span class="result-label" data-i18n="confidence">Confidence</span>
+              <strong id="confidence">0%</strong>
+            </div>
+            <div class="result-row">
+              <span class="result-label" data-i18n="crop">Crop</span>
+              <strong id="crop">--</strong>
+            </div>
+            <div class="result-row">
+              <span class="result-label" data-i18n="severity">Severity</span>
+              <strong id="severity">--</strong>
+            </div>
+            <div class="result-row">
+              <span class="result-label" data-i18n="urgency">Urgency</span>
+              <strong id="urgency">--</strong>
+            </div>
+          </div>
+
+          <div class="treatment-card hidden" id="treatmentCard">
+            <h3 data-i18n="recommendedTreatment">Recommended treatment</h3>
+            <p id="treatmentText" data-i18n="treatmentPlaceholder">Your disease treatment guidance will appear here.</p>
+          </div>
+          <p class="confidence-warning hidden" id="confidenceWarning" role="alert"></p>
+        </section>
+      </main>
+
+      <section class="panel history-panel">
+        <div class="panel-header">
+          <h2 data-i18n="recentSummary">Recent disease summary</h2>
+          <span data-i18n="oneEntry">One entry per disease</span>
+        </div>
+        <div id="historyList" class="history-list">
+          <p class="empty-state">No predictions yet. Upload an image to begin.</p>
+        </div>
+        <div class="chart-section">
+          <div class="chart-heading">
+            <h3 data-i18n="confidenceTrend">Confidence trend</h3>
+            <span data-i18n="recentPredictions">Recent predictions</span>
+          </div>
+          <div id="confidenceChart" class="confidence-chart">
+            <p class="empty-state">Confidence data will appear after analysis.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/translations.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const form = document.querySelector('.upload-form');
+      const labelEl = $('label'), confidenceEl = $('confidence'), cropEl = $('crop'), severityEl = $('severity'), urgencyEl = $('urgency');
+      const resultImage = $('resultImage'), treatmentCard = $('treatmentCard'), treatmentText = $('treatmentText'), confidenceWarning = $('confidenceWarning');
+      const historyList = $('historyList'), confidenceChart = $('confidenceChart'), fileInput = $('file'), preview = $('imagePreview'), previewImage = $('previewImage'), uploadStatus = $('uploadStatus'), identifyButton = $('identifyButton');
+      const cameraButton = $('cameraButton'), stopCameraButton = $('stopCameraButton'), captureButton = $('captureButton'), cameraPreview = $('cameraPreview'), cameraCanvas = $('cameraCanvas');
+      let cameraStream, lastPayload = null, historyRecords = [];
+
+      function t(key, vars) { return I18n.text(key, vars); }
+      function showPreview(file) { if (!file) return; previewImage.src = URL.createObjectURL(file); preview.classList.remove('hidden'); labelEl.textContent = t('readyToScan'); }
+      function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
+      function renderPayload(payload) {
+        lastPayload = payload; labelEl.textContent = I18n.disease(payload.disease_info?.label || payload.prediction || payload.label || ''); confidenceEl.textContent = `${payload.confidence}%`;
+        cropEl.textContent = I18n.value('crop', payload.disease_info?.crop); severityEl.textContent = I18n.value('severity', payload.disease_info?.severity); urgencyEl.textContent = I18n.value('urgency', payload.disease_info?.urgency);
+        resultImage.src = previewImage.src; resultImage.classList.remove('hidden'); treatmentText.textContent = I18n.getLanguage() === 'en' ? (payload.treatment || t('treatmentPlaceholder')) : t('reviewExpert'); treatmentCard.classList.remove('hidden');
+        confidenceWarning.textContent = payload.low_confidence ? `${t('lowConfidence')}: ${t('lowConfidenceMessage')} ${t('clearerImage')}` : ''; confidenceWarning.classList.toggle('hidden', !payload.low_confidence); uploadStatus.textContent = t('savedHistory');
+      }
+      function renderHistory() {
+        if (!historyRecords.length) { historyList.innerHTML = `<p class="empty-state">${t('noPredictions')}</p>`; confidenceChart.innerHTML = `<p class="empty-state">${t('confidenceAfterAnalysis')}</p>`; return; }
+        const uniqueRecords = historyRecords.filter((record, index, all) => all.findIndex((item) => item.prediction === record.prediction) === index);
+        historyList.innerHTML = uniqueRecords.map((record) => `<div class="history-item"><div class="history-thumb"><img src="${escapeHtml(record.image_url || '')}" alt="${escapeHtml(record.uploaded_name || t('scan'))}" /></div><div class="history-details"><strong>${escapeHtml(I18n.disease(record.prediction))}</strong><span>${escapeHtml(t('confidenceLabel', { value: record.confidence || 0 }))}</span><small>${escapeHtml(record.created_at || t('analysisComplete'))}</small></div></div>`).join('');
+        confidenceChart.innerHTML = historyRecords.slice(0, 5).reverse().map((record, index) => { const confidence = Math.max(0, Math.min(100, Number(record.confidence) || 0)); return `<div class="chart-bar-group"><span class="chart-value">${confidence}%</span><div class="chart-bar-track"><div class="chart-bar" style="height: ${confidence}%"></div></div><small>${t('scan')} ${index + 1}</small></div>`; }).join('');
+      }
+      async function loadHistory() { try { const response = await fetch('/history'); if (response.ok) { historyRecords = await response.json(); renderHistory(); } } catch (error) { historyList.innerHTML = `<p class="empty-state">${t('unableHistory')}</p>`; confidenceChart.innerHTML = `<p class="empty-state">${t('unableConfidence')}</p>`; } }
+      function switchLanguage(language) { I18n.setLanguage(language); I18n.apply(); $('languageSwitcher').value = language; if (lastPayload) renderPayload(lastPayload); renderHistory(); }
+
+      document.querySelectorAll('.language-option').forEach((option) => option.addEventListener('click', () => { document.querySelectorAll('.language-option').forEach((item) => { const selected = item === option; item.classList.toggle('selected', selected); item.setAttribute('aria-checked', selected); }); $('continueButton').disabled = false; $('continueButton').dataset.language = option.dataset.language; }));
+      $('continueButton').addEventListener('click', () => { const language = $('continueButton').dataset.language; if (!language) return; I18n.setLanguage(language); $('languageGate').classList.add('hidden'); $('appShell').classList.remove('hidden'); I18n.apply(); loadHistory(); });
+      $('languageSwitcher').addEventListener('change', (event) => switchLanguage(event.target.value));
+      fileInput.addEventListener('change', () => showPreview(fileInput.files[0]));
+      cameraButton.addEventListener('click', async () => { if (!navigator.mediaDevices?.getUserMedia) { uploadStatus.textContent = t('cameraUnsupported'); return; } try { cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); cameraPreview.srcObject = cameraStream; cameraPreview.classList.remove('hidden'); captureButton.classList.remove('hidden'); stopCameraButton.classList.remove('hidden'); uploadStatus.textContent = t('cameraReady'); } catch (error) { uploadStatus.textContent = t('cameraDenied'); } });
+      stopCameraButton.addEventListener('click', () => { cameraStream?.getTracks().forEach((track) => track.stop()); cameraPreview.srcObject = null; cameraPreview.classList.add('hidden'); captureButton.classList.add('hidden'); stopCameraButton.classList.add('hidden'); });
+      captureButton.addEventListener('click', () => { cameraCanvas.width = cameraPreview.videoWidth; cameraCanvas.height = cameraPreview.videoHeight; cameraCanvas.getContext('2d').drawImage(cameraPreview, 0, 0); cameraCanvas.toBlob((blob) => { const capturedFile = new File([blob], 'camera-leaf.jpg', { type: 'image/jpeg' }); const transfer = new DataTransfer(); transfer.items.add(capturedFile); fileInput.files = transfer.files; showPreview(capturedFile); uploadStatus.textContent = t('leafCaptured'); }, 'image/jpeg', 0.92); });
+      form.addEventListener('submit', async (event) => { event.preventDefault(); if (!fileInput.files.length) { uploadStatus.textContent = t('chooseImage'); return; } identifyButton.disabled = true; identifyButton.textContent = t('analyzing'); uploadStatus.textContent = t('preprocessing'); try { const response = await fetch('/predict', { method: 'POST', body: new FormData(form) }); const payload = await response.json(); if (!response.ok) throw new Error(payload.error || t('scanCouldNotComplete')); renderPayload(payload); await loadHistory(); } catch (error) { labelEl.textContent = t('scanFailed'); confidenceEl.textContent = '--'; treatmentText.textContent = t('scanCouldNotComplete'); treatmentCard.classList.remove('hidden'); uploadStatus.textContent = t('scanCouldNotComplete'); } finally { identifyButton.disabled = false; identifyButton.textContent = t('identifyDisease'); } });
+
+      const savedLanguage = I18n.savedLanguage();
+      if (savedLanguage) { I18n.init(savedLanguage); $('languageGate').classList.add('hidden'); $('appShell').classList.remove('hidden'); $('languageSwitcher').value = savedLanguage; I18n.apply(); loadHistory(); }
+    </script>
+  </body>
+</html>
+    </div>
+
+    <script>
+      const form = document.querySelector('.upload-form');
+      const labelEl = document.getElementById('label');
+      const confidenceEl = document.getElementById('confidence');
+      const cropEl = document.getElementById('crop');
+      const severityEl = document.getElementById('severity');
+      const urgencyEl = document.getElementById('urgency');
+      const resultImage = document.getElementById('resultImage');
+      const treatmentCard = document.getElementById('treatmentCard');
+      const treatmentText = document.getElementById('treatmentText');
+      const confidenceWarning = document.getElementById('confidenceWarning');
+      const historyList = document.getElementById('historyList');
+      const confidenceChart = document.getElementById('confidenceChart');
+      const fileInput = document.getElementById('file');
+      const preview = document.getElementById('imagePreview');
+      const previewImage = document.getElementById('previewImage');
+      const uploadStatus = document.getElementById('uploadStatus');
+      const identifyButton = document.getElementById('identifyButton');
+      const cameraButton = document.getElementById('cameraButton');
+      const stopCameraButton = document.getElementById('stopCameraButton');
+      const captureButton = document.getElementById('captureButton');
+      const cameraPreview = document.getElementById('cameraPreview');
+      const cameraCanvas = document.getElementById('cameraCanvas');
+      let cameraStream;
+
+      function showPreview(file) {
+        if (!file) return;
+        previewImage.src = URL.createObjectURL(file);
+        preview.classList.remove('hidden');
+      }
+
+      fileInput.addEventListener('change', () => {
+        showPreview(fileInput.files[0]);
+        if (fileInput.files[0]) labelEl.textContent = 'Ready to scan';
+      });
+
+      cameraButton.addEventListener('click', async () => {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          uploadStatus.textContent = 'Camera access is not supported by this browser.';
+          return;
+        }
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          cameraPreview.srcObject = cameraStream;
+          cameraPreview.classList.remove('hidden');
+          captureButton.classList.remove('hidden');
+          stopCameraButton.classList.remove('hidden');
+          uploadStatus.textContent = 'Camera ready. Center the leaf and capture it.';
+        } catch (error) {
+          uploadStatus.textContent = 'Camera permission was not granted.';
+        }
+      });
+
+      stopCameraButton.addEventListener('click', () => {
+        cameraStream?.getTracks().forEach((track) => track.stop());
+        cameraPreview.srcObject = null;
+        cameraPreview.classList.add('hidden');
+        captureButton.classList.add('hidden');
+        stopCameraButton.classList.add('hidden');
+      });
+
+      captureButton.addEventListener('click', () => {
+        cameraCanvas.width = cameraPreview.videoWidth;
+        cameraCanvas.height = cameraPreview.videoHeight;
+        cameraCanvas.getContext('2d').drawImage(cameraPreview, 0, 0);
+        cameraCanvas.toBlob((blob) => {
+          const capturedFile = new File([blob], 'camera-leaf.jpg', { type: 'image/jpeg' });
+          const transfer = new DataTransfer();
+          transfer.items.add(capturedFile);
+          fileInput.files = transfer.files;
+          showPreview(capturedFile);
+          uploadStatus.textContent = 'Leaf captured. Ready to scan.';
+        }, 'image/jpeg', 0.92);
+      });
+
+      async function loadHistory() {
+        try {
+          const response = await fetch('/history');
+          if (!response.ok) return;
+          const records = await response.json();
+
+          if (!records.length) {
+            historyList.innerHTML = '<p class="empty-state">No predictions yet. Upload an image to begin.</p>';
+            confidenceChart.innerHTML = '<p class="empty-state">Confidence data will appear after analysis.</p>';
+            return;
+          }
+
+          const uniqueRecords = records.filter(
+            (record, index, allRecords) =>
+              allRecords.findIndex((item) => item.prediction === record.prediction) === index
+          );
+
+          historyList.innerHTML = uniqueRecords
+            .map(
+              (record) => `
+                <div class="history-item">
+                  <div class="history-thumb">
+                    <img src="${record.image_url || ''}" alt="${record.uploaded_name || 'Prediction'}" />
+                  </div>
+                  <div class="history-details">
+                    <strong>${record.prediction || 'Unknown'}</strong>
+                    <span>${record.confidence || 0}% confidence</span>
+                    <small>${record.created_at || 'Just now'}</small>
+                  </div>
+                </div>
+              `
+            )
+            .join('');
+
+          confidenceChart.innerHTML = records
+            .slice(0, 5)
+            .slice()
+            .reverse()
+            .map((record, index) => {
+              const confidence = Math.max(0, Math.min(100, Number(record.confidence) || 0));
+              return `
+                <div class="chart-bar-group">
+                  <span class="chart-value">${confidence}%</span>
+                  <div class="chart-bar-track"><div class="chart-bar" style="height: ${confidence}%"></div></div>
+                  <small>Scan ${index + 1}</small>
+                </div>
+              `;
+            })
+            .join('');
+        } catch (error) {
+          historyList.innerHTML = '<p class="empty-state">Unable to load recent history.</p>';
+          confidenceChart.innerHTML = '<p class="empty-state">Unable to load confidence data.</p>';
+        }
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!fileInput.files.length) {
+          uploadStatus.textContent = 'Choose or capture a leaf image first.';
+          return;
+        }
+        identifyButton.disabled = true;
+        identifyButton.textContent = 'Analyzing leaf...';
+        uploadStatus.textContent = 'Preprocessing image and running the model...';
+        const formData = new FormData(form);
+        try {
+          const response = await fetch('/predict', { method: 'POST', body: formData });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || 'Unable to process image.');
+          labelEl.textContent = payload.disease_info?.label || payload.prediction || payload.label || 'Unknown disease';
+          confidenceEl.textContent = `${payload.confidence}%`;
+          cropEl.textContent = payload.disease_info?.crop || '--';
+          severityEl.textContent = payload.disease_info?.severity || '--';
+          urgencyEl.textContent = payload.disease_info?.urgency || '--';
+          resultImage.src = previewImage.src;
+          resultImage.classList.remove('hidden');
+          treatmentText.textContent = payload.treatment;
+          treatmentCard.classList.remove('hidden');
+          confidenceWarning.textContent = payload.low_confidence ? `Low confidence: ${payload.confidence_message}` : '';
+          confidenceWarning.classList.toggle('hidden', !payload.low_confidence);
+          uploadStatus.textContent = 'Scan complete. Prediction saved to history.';
+          await loadHistory();
+        } catch (error) {
+          labelEl.textContent = 'Scan failed';
+          confidenceEl.textContent = '--';
+          treatmentText.textContent = error.message;
+          treatmentCard.classList.remove('hidden');
+          uploadStatus.textContent = 'The scan could not be completed. Try another image.';
+        } finally {
+          identifyButton.disabled = false;
+          identifyButton.textContent = 'Identify Disease';
+        }
+      });
+
+      loadHistory();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "class_names": [
+    "Healthy",
+    "Early Blight",
+    "Late Blight",
+    "Leaf Spot",
+    "Rust",
+    "Powdery Mildew",
+    "Mosaic Virus",
+    "Nutrient Deficiency"
+  ],
+  "input_shape": [
+    224,
+    224,
+    3
+  ],
+  "dataset": "Synthetic demo dataset",
+  "notes": "This project stores a real Keras model and class list; the dataset is a synthetic demo fallback because no public PlantVillage folder is present in the workspace."
+}

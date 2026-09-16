@@ -1,0 +1,14 @@
+                     precision    recall  f1-score   support
+
+            Healthy       0.00      0.00      0.00        21
+       Early Blight       0.00      0.00      0.00        26
+        Late Blight       0.00      0.00      0.00        28
+          Leaf Spot       0.00      0.00      0.00        22
+               Rust       0.13      1.00      0.23        25
+     Powdery Mildew       0.00      0.00      0.00        21
+       Mosaic Virus       0.00      0.00      0.00        30
+Nutrient Deficiency       0.00      0.00      0.00        19
+
+           accuracy                           0.13       192
+          macro avg       0.02      0.12      0.03       192
+       weighted avg       0.02      0.13      0.03       192

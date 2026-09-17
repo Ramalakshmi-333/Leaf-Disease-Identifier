@@ -1,17 +1,33 @@
+import os
+
+# Force TensorFlow to use CPU only on Render
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
 import tensorflow
+
 import io
 import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-import os
+
 import matplotlib
 matplotlib.use("Agg")
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 from flask import Flask, jsonify, render_template, request, send_from_directory
 from PIL import Image, UnidentifiedImageError
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, precision_score, recall_score
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score
+)
 
 try:
     import tensorflow as tf

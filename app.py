@@ -723,34 +723,20 @@ def create_app(testing: bool = False):
     return app
 
 
+
 app_model_cache = None
 
 
 def _bootstrap_model_once():
     global app_model_cache
     app_model_cache = _load_model()
-
-
-_bootstrap_model_once()
-
-
-if __name__ == "__main__":
-    app = create_app()
-    app.run(host="0.0.0.0", port=5000, debug=True)
-app_model_cache = None
-
-
-def _bootstrap_model_once():
-    global app_model_cache
-    app_model_cache = _load_model()
-
-
-_bootstrap_model_once()
 
 
 app = create_app()
 
 if __name__ == "__main__":
+    _bootstrap_model_once()
+
     app.run(
         host="0.0.0.0",
         port=int(os.environ.get("PORT", 5000)),

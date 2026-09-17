@@ -577,11 +577,13 @@ def create_app(testing: bool = False):
     @app.route("/api/health")
     def api_health():
         return jsonify({
-            "status": "ok",
-            "message": "Crop disease service is online.",
-            "model_available": app_model_cache is not None,
-            "classes": _active_class_names(),
-        })
+        "status": "ok",
+        "message": "Crop disease service is online.",
+        "model_available": app_model_cache is not None,
+        "model_load_error": MODEL_LOAD_ERROR,
+        "tensorflow_import_error": TENSORFLOW_IMPORT_ERROR,
+        "classes": _active_class_names()
+    })
 
     @app.route("/api/diseases")
     def api_diseases():
